@@ -20,7 +20,7 @@ namespace llvm {
 
 namespace rv {
   // TODO auto-generate this from intrinsics.def
-  enum RVIntrinsic : int {
+  enum class RVIntrinsic : int {
     Unknown = -1, // no recognized intrinsic
 
   // predicate intrinsics
