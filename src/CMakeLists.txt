@@ -27,7 +27,6 @@ add_rv_library(RV
   ./Mask.cpp
   ./MaskBuilder.cpp
   ./PlatformInfo.cpp
-  ./VectorizationInfoProxyPass.cpp
   ./annotations.cpp
   ./config.cpp
   ./init.cpp
