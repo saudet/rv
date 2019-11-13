@@ -177,7 +177,7 @@ VectorizerInterface::linearize(VectorizationInfo& vecInfo,
     MaskExpander maskEx(vecInfo, domTree, postDomTree, loopInfo);
 
     // convert divergent loops inside the region to uniform loops
-    GuardedDivLoopTrans guardedDLT(platInfo, vecInfo, maskEx, domTree, loopInfo);
+    GuardedDivLoopTrans guardedDLT(platInfo, vecInfo, domTree, loopInfo);
     guardedDLT.transformDivergentLoops();
 
     postDomTree.recalculate(vecInfo.getScalarFunction()); // FIXME

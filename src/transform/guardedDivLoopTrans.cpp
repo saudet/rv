@@ -10,7 +10,6 @@
 #include "rv/transform/guardedDivLoopTrans.h"
 
 #include "rv/PlatformInfo.h"
-#include "rv/transform/maskExpander.h"
 #include "utils/rvTools.h"
 
 #include "rvConfig.h"
@@ -398,8 +397,6 @@ GuardedTransformSession::transformLoop() {
        if (!fusedExit.empty()) divExitBuilder.SetInsertPoint(&*fusedExit.begin());
        exitMaskPhi = divExitBuilder.CreatePHI(boolTy, 1, exitBlock.getName().str() + ".xlcssa");
        vecInfo.setVectorShape(*exitMaskPhi, exitShape);
-       // maskEx.setBlockMask(exitBlock, *exitMaskPhi);
-       // vecInfo.setPredicate(exitBlock, *exitMaskPhi);
      }
 
      exitMaskPhi->addIncoming(exitDescs[&exitBlock].trackerPhi, &loopHeader);
@@ -477,10 +474,6 @@ GuardedTransformSession::transformLoop() {
      errs() << "DLT: converted loop:\n";
      vecInfo.dump();
    }
-
-   // finally set the loop header mask to terminate maskEx
-   // vecInfo.setPredicate(*loop.getHeader(), *liveMaskDesc.trackerPhi); // illegal
-   // maskEx.setBlockMask(*loop.getHeader(), *liveMaskDesc.trackerPhi);
 }
 
 // split the latch if it is not pure (only a terminator)
@@ -550,35 +543,13 @@ GuardedDivLoopTrans::addLoopInitMasks(llvm::Loop & loop) {
   if (it == sessions.end()) return; // uniform loop
   auto * loopSession = it->second;
 
-// // request entry edge
-//   // this loop has a live mask -> request its live in value
-//   auto & loopPreHead = *loop.getLoopPreheader();
-//   auto & preHeadTerm = *loopPreHead.getTerminator();
-//   auto & loopHead = *loop.getHeader();
-//   IndexSet headerIndices;
-//   // maskEx.getPredecessorEdges(preHeadTerm, loopHead, headerIndices);
-//   // auto & initMask = maskEx.requestJoinedEdgeMask(preHeadTerm, headerIndices);
-//
-//   // attach the missing preheader input to the live mask
-//   auto & liveMaskPhi = *loopSession->liveMaskDesc.trackerPhi;
-//   // auto & liveMaskPhi = cast<PHINode>(*maskEx.getBlockMask(loopHead));
-//   int initIdx = liveMaskPhi.getBasicBlockIndex(&loopPreHead);
-//   assert(initIdx >= 0 && "loop pre-header has changed!");
-//   liveMaskPhi.setIncomingValue(initIdx, &initMask);
-//
-//   auto * divExit = loop.getExitBlock();
-//   assert(divExit);
-//   // maskEx.setBlockMask(*divExit, initMask);
-//   // vecInfo.setPredicate(*divExit, initMask);
-
 // add defaulting definitions on tracker phis
   loopSession->finalizeLiveOutTrackers();
 }
 
-GuardedDivLoopTrans::GuardedDivLoopTrans(PlatformInfo & _platInfo, VectorizationInfo & _vecInfo, MaskExpander & _maskEx, llvm::DominatorTree & _domTree, llvm::LoopInfo & _loopInfo)
+GuardedDivLoopTrans::GuardedDivLoopTrans(PlatformInfo & _platInfo, VectorizationInfo & _vecInfo, llvm::DominatorTree & _domTree, llvm::LoopInfo & _loopInfo)
 : platInfo(_platInfo)
 , vecInfo(_vecInfo)
-, maskEx(_maskEx)
 , domTree(_domTree)
 , loopInfo(_loopInfo)
 , boolTy(Type::getInt1Ty(vecInfo.getContext()))
@@ -601,7 +572,7 @@ GuardedDivLoopTrans::transformDivergentLoopControl(Loop & loop) {
     ++numDivergentLoops;
     hasDivergentLoops = true;
 
-    auto * loopSession = new GuardedTransformSession(loop, loopInfo, vecInfo, platInfo, maskEx);
+    auto * loopSession = new GuardedTransformSession(loop, loopInfo, vecInfo, platInfo);
     loopSession->transformLoop();
     numKillExits += loopSession->numKillExits; // accumulate global stats
     numDivExits += loopSession->numDivExits; // accumulate global stats
