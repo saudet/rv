@@ -34,33 +34,6 @@ using namespace llvm;
 
 namespace rv {
 
-char VAWrapperPass::ID = 0;
-
-void VAWrapperPass::getAnalysisUsage(AnalysisUsage &Info) const {
-  Info.addRequired<DominatorTreeWrapperPass>();
-  Info.addRequired<PostDominatorTreeWrapperPass>();
-  Info.addRequired<LoopInfoWrapperPass>();
-  Info.addRequired<VectorizationInfoProxyPass>();
-
-  Info.setPreservesAll();
-}
-
-bool VAWrapperPass::runOnFunction(Function &F) {
-  auto &Vecinfo = getAnalysis<VectorizationInfoProxyPass>().getInfo();
-  auto &platInfo = getAnalysis<VectorizationInfoProxyPass>().getPlatformInfo();
-
-  const auto &domTree = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  const auto &postDomTree =
-      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
-  const LoopInfo &LoopInfo = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-
-  VectorizationAnalysis vea(config, platInfo, Vecinfo, domTree, postDomTree,
-                            LoopInfo);
-  vea.analyze();
-
-  return false;
-}
-
 VectorizationAnalysis::VectorizationAnalysis(
     Config _config, PlatformInfo &platInfo, VectorizationInfo &VecInfo,
     const DominatorTree &domTree, const PostDominatorTree &postDomTree,
@@ -606,10 +579,6 @@ bool VectorizationAnalysis::pushMissingOperands(const Instruction &I) {
 
 VectorShape VectorizationAnalysis::getShape(const Value &V) {
   return vecInfo.getVectorShape(V);
-}
-
-FunctionPass *createVectorizationAnalysisPass(rv::Config config) {
-  return new VAWrapperPass(config);
 }
 
 } // namespace rv

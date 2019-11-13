@@ -11,7 +11,6 @@
 #define RV_VECTORIZATIONANALYSIS_H_
 
 #include "rv/PlatformInfo.h"
-#include "rv/VectorizationInfoProxyPass.h"
 #include "rv/analysis/AllocaSSA.h"
 #include "rv/analysis/predicateAnalysis.h"
 #include "rv/config.h"
@@ -48,20 +47,6 @@ class LoopInfo;
 
 namespace rv {
 using InstVec = const std::vector<const llvm::Instruction *>;
-
-class VAWrapperPass : public llvm::FunctionPass {
-  static char ID;
-  Config config;
-
-public:
-  VAWrapperPass() : FunctionPass(ID), config() {}
-  VAWrapperPass(Config _config) : FunctionPass(ID), config(_config) {}
-  VAWrapperPass(const VAWrapperPass &) = delete;
-  VAWrapperPass &operator=(VAWrapperPass) = delete;
-
-  void getAnalysisUsage(llvm::AnalysisUsage &Info) const override;
-  bool runOnFunction(llvm::Function &F) override;
-};
 
 class VectorizationAnalysis {
   Config config;
@@ -173,8 +158,6 @@ private:
   // Cast undefined instruction shapes to uniform shapes
   void promoteUndefShapesToUniform(const llvm::Function &F);
 };
-
-llvm::FunctionPass *createVectorizationAnalysisPass(Config config = Config());
 
 } // namespace rv
 
