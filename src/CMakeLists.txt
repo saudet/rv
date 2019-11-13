@@ -24,6 +24,8 @@ if (RV_DEBUG)
 endif()
 
 add_rv_library(RV
+  ./Mask.cpp
+  ./MaskBuilder.cpp
   ./PlatformInfo.cpp
   ./VectorizationInfoProxyPass.cpp
   ./annotations.cpp
