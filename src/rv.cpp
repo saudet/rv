@@ -22,7 +22,6 @@
 #include "rv/intrinsics.h"
 
 #include "rv/transform/loopExitCanonicalizer.h"
-#include "rv/transform/divLoopTrans.h"
 #include "rv/transform/guardedDivLoopTrans.h"
 
 #include "rv/PlatformInfo.h"
@@ -178,15 +177,8 @@ VectorizerInterface::linearize(VectorizationInfo& vecInfo,
     MaskExpander maskEx(vecInfo, domTree, postDomTree, loopInfo);
 
     // convert divergent loops inside the region to uniform loops
-    if (CheckFlag("RV_OLD_DLT")) {
-      Report() << "Using old DLT\n";
-      DivLoopTrans DLT(platInfo, vecInfo, maskEx, domTree, loopInfo);
-      DLT.transformDivergentLoops();
-    } else {
-      Report() << "Using new (guarded) DLT\n";
-      GuardedDivLoopTrans guardedDLT(platInfo, vecInfo, maskEx, domTree, loopInfo);
-      guardedDLT.transformDivergentLoops();
-    }
+    GuardedDivLoopTrans guardedDLT(platInfo, vecInfo, maskEx, domTree, loopInfo);
+    guardedDLT.transformDivergentLoops();
 
     postDomTree.recalculate(vecInfo.getScalarFunction()); // FIXME
     domTree.recalculate(vecInfo.getScalarFunction()); // FIXME
