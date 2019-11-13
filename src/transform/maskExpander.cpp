@@ -298,10 +298,13 @@ MaskExpander::requestBlockMask(BasicBlock & BB) {
       redundantUniPhi &= (lastUniIn.knownAllTrue()) || (lastUniIn == predMask);
       lastUniIn = predMask;
 
-      uniPredPhi->addIncoming(predMask.getPred(), predBlock);
-      uniAVLPhi->addIncoming(predMask.getAVL(), predBlock);
+      uniPredPhi->addIncoming(
+          &predMask.requestPredAsValue(uniPredPhi->getContext()), predBlock);
+      uniAVLPhi->addIncoming(
+          &predMask.requestAVLAsValue(uniAVLPhi->getContext()), predBlock);
 
-      predPhiShape = VectorShape::join(vecInfo.getVectorShape(predMask), predPhiShape);
+      predPhiShape =
+          VectorShape::join(vecInfo.getVectorShape(predMask), predPhiShape);
     }
 #endif
 
@@ -317,11 +320,11 @@ MaskExpander::requestBlockMask(BasicBlock & BB) {
   // branch divergence is caused by immediate predecessor -> compute predicate
     IF_DEBUG_ME { errs() << " -> div from " << predBlock->getName() << " mask " << edgeMask << "\n"; }
 
-    auto * edgePredInst = dyn_cast<Instruction>(edgeMask.getPred());
     // TODO what about the AVL?
 
     // generate a dominating definition (if necessary)
-    if (edgePredInst) {
+    if (edgeMask.getPred() && isa<Instruction>(edgeMask.getPred())) {
+       auto * edgePredInst = cast<Instruction>(edgeMask.getPred());
 
       if (!domTree.dominates(edgePredInst->getParent(), &BB)) {
         std::string defBlockName = edgePredInst->getParent()->getName();
