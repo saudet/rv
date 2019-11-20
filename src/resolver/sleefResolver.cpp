@@ -18,6 +18,7 @@
 #include <llvm/Analysis/MemoryDependenceAnalysis.h>
 #include <llvm/Analysis/BranchProbabilityInfo.h>
 #include <llvm/Passes/PassBuilder.h>
+#include "llvm/Transforms/Utils/LCSSA.h"
 
 #include "rv/PlatformInfo.h"
 #include "utils/rvTools.h"
@@ -474,7 +475,7 @@ public:
     for (auto * archList : archLists) delete archList;
   }
 
-  std::unique_ptr<FunctionResolver> resolve(llvm::StringRef funcName, llvm::FunctionType & scaFuncTy, const VectorShapeVec & argShapes, int vectorWidth, bool hasPredicate, llvm::Module & destModule);
+  std::unique_ptr<FunctionResolver> resolve(llvm::StringRef funcName, llvm::FunctionType & scaFuncTy, const VectorShapeVec & argShapes, int vectorWidth, bool hasPredicate, llvm::Module & destModule) override;
 };
 
 
@@ -619,6 +620,11 @@ struct SleefVLAResolver : public FunctionResolver {
     auto & SE = FAM.getResult<ScalarEvolutionAnalysis>(*clonedFunc);
     auto & MDR = FAM.getResult<MemoryDependenceAnalysis>(*clonedFunc);
     auto & BPI = FAM.getResult<BranchProbabilityAnalysis>(*clonedFunc);
+
+    // re-establish LCSSA
+    FunctionPassManager FPM;
+    FPM.addPass<LCSSAPass>(LCSSAPass());
+    FPM.run(*clonedFunc, FAM);
 
     // normalize loop exits (TODO make divLoopTrans work without this)
     {
