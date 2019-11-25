@@ -30,6 +30,7 @@ using namespace llvm;
 
 namespace rv {
 
+
 MaskExpander::MaskExpander(VectorizationInfo & _vecInfo, const DominatorTree & _domTree, const llvm::PostDominatorTree & _postDomTree, const llvm::LoopInfo & _loopInfo)
 : vecInfo(_vecInfo)
 , domTree(_domTree)
