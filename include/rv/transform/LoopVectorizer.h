@@ -16,6 +16,7 @@
 #include "rv/analysis/reductionAnalysis.h"
 #include "rv/analysis/loopAnnotations.h"
 #include "rv/config.h"
+#include "rv/transform/remTransform.h"
 
 namespace llvm {
   class Loop;
@@ -76,7 +77,7 @@ private:
 
   // convert L into a vectorizable loop
   // this will create a new scalar loop that can be vectorized directly with RV
-  llvm::Loop* transformToVectorizableLoop(llvm::Loop &L, int VectorWidth, int tripAlign, ValueSet & uniformOverrides);
+  PreparedLoop transformToVectorizableLoop(llvm::Loop &L, int VectorWidth, int tripAlign, ValueSet & uniformOverrides);
 
   bool canAdjustTripCount(llvm::Loop &L, int VectorWidth, int TripCount);
 
