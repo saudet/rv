@@ -244,9 +244,24 @@ bool LoopVectorizer::hasVectorizableLoopStructure(Loop &L, bool EmitRemarks) {
   return true;
 }
 
+static unsigned getOnlyLine() {
+  char *OnlyLine = getenv("RV_ONLY_LINE");
+  if (!OnlyLine) return 0;
+  return atoi(OnlyLine);
+}
+
 bool LoopVectorizer::scoreLoop(LoopJob &LJ, LoopScore &LS, Loop &L) {
   if (enableDiagOutput) {
     Report() << "loopVecPass::scopeLoop " << L.getName() << "\n";
+  }
+
+  Value *CodeRegion;
+  DebugLoc DL;
+  getRemarkLoc(L, &*L.getHeader()->phis().begin(), CodeRegion, DL);
+
+  if (unsigned OnlyLine = getOnlyLine()) {
+    if (DL.getLine() != OnlyLine)
+      remarkMiss("rv-loopvec", "Not the RV_ONLY_LINE loop", L);
   }
 
   LoopMD mdAnnot = GetLoopAnnotation(L);
