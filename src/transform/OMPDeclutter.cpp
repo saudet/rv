@@ -39,7 +39,7 @@
 
 #include <set>
 
-#if 0
+#if 1
 #define IF_DEBUG_DEC IF_DEBUG
 #else
 #define IF_DEBUG_DEC if (true)
