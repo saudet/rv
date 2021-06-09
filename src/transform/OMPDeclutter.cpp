@@ -274,7 +274,7 @@ struct OMPDeclutterSession {
       auto *CallParent = CI->getParent();
       auto *UpperBoundSlot = CI->getArgOperand(5);
 
-      errs() << "Found upper bound slot:" << *UpperBoundSlot << "\n";
+      IF_DEBUG_DEC { errs() << "Found upper bound slot:" << *UpperBoundSlot << "\n"; }
       Value *UpperBoundValue = nullptr;
       for (auto It = I.getIterator(); It != CallParent->end(); ++It) {
         auto *Store = dyn_cast<StoreInst>(It);
@@ -285,19 +285,19 @@ struct OMPDeclutterSession {
 
         UpperBoundValue = Store->getValueOperand();
       }
-      errs() << "Found upper bound value:" << *UpperBoundValue << "\n";
+      IF_DEBUG_DEC { errs() << "Found upper bound value:" << *UpperBoundValue << "\n"; }
 
       for (auto &Use : UpperBoundSlot->uses()) {
         auto Reload = dyn_cast<LoadInst>(Use.getUser());
         if (!Reload)
           continue;
-        errs() << "Dominating? " << *Reload << "\n";
+        IF_DEBUG_DEC { errs() << "Dominating? " << *Reload << "\n"; }
 
         if ((CallParent == Reload->getParent()) ||
             !DT.dominates(CallParent, Reload->getParent()))
           continue;
 
-        errs() << "REPLACE RELOAD: " << *Reload << " with " << *UpperBoundValue << "\n";
+        IF_DEBUG_DEC { errs() << "REPLACE RELOAD: " << *Reload << " with " << *UpperBoundValue << "\n"; }
         Reload->replaceAllUsesWith(UpperBoundValue);
         DeadLoads.insert(Reload);
       }
