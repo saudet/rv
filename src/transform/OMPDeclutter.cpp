@@ -339,6 +339,7 @@ struct OMPDeclutterSession {
 OMPDeclutter::OMPDeclutter() : FunctionPass(ID) {}
 
 bool OMPDeclutter::runOnFunction(Function &F) {
+#if 0
   static bool Dumped = false;
   if (!Dumped) {
     if (F.getParent()->getTargetTriple().substr(0,2) == "ve") {
@@ -348,17 +349,22 @@ bool OMPDeclutter::runOnFunction(Function &F) {
       F.getParent()->print(DumpOut, nullptr, true, true);
     }
   }
+#endif
 
+#if 0
   errs() << "PRE!\n";
   Dump(F);
+#endif
 
   auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   OMPDeclutterSession Session(F, DT, LI);
   bool Res = Session.run();
 
+#if 0
   errs() << "POST!\n";
   Dump(F);
+#endif
 
   return Res;
 }
