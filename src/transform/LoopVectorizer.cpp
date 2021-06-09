@@ -261,7 +261,8 @@ bool LoopVectorizer::scoreLoop(LoopJob &LJ, LoopScore &LS, Loop &L) {
 
   if (unsigned OnlyLine = getOnlyLine()) {
     if (DL.getLine() != OnlyLine)
-      remarkMiss("rv-loopvec", "Not the RV_ONLY_LINE loop", L);
+      return false;
+    remark("Hit the RV_ONLY_LINE loop", "RVOnlyLine", L);
   }
 
   LoopMD mdAnnot = GetLoopAnnotation(L);
