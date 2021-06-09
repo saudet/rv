@@ -31,6 +31,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/Instructions.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 #include "report.h"
 
 #include <set>
@@ -47,6 +49,7 @@ using namespace rv;
 // kmpc function names.:
 const char *kmpc_reduce_nowait_Name = "__kmpc_reduce_nowait";
 const char *kmpc_fork_call_Name = "__kmpc_fork_call";
+const char *kmpc_static_init_4_Name = "__kmpc_static_init_4";
 
 static bool
 subscriptsAlloca(Value *Ptr, AllocaInst *Alloc) {
@@ -211,13 +214,9 @@ struct OMPDeclutterSession {
     return false;
   }
 
-  bool run() {
+  bool privatizeReductionSlots() {
     auto KMPReduceFunc = F.getParent()->getFunction(kmpc_reduce_nowait_Name);
     if (!KMPReduceFunc)
-      return false;
-
-    // Only transform inner-most (non forking) outlined functions to enable vectorization.
-    if (callsFork())
       return false;
 
     bool Changed = false;
@@ -252,16 +251,62 @@ struct OMPDeclutterSession {
     }
     return Changed;
   }
+
+  bool privatizeIterationBounds() {
+    auto KMPStaticInitFunc = F.getParent()->getFunction(kmpc_static_init_4_Name);
+    if (!KMPStaticInitFunc)
+      return false;
+
+    // Scan for ' __kmpc_reduce_nowait' call.
+    for (auto &I : instructions(F)) {
+      auto *CI = dyn_cast<CallInst>(&I);
+      if (!CI)
+        continue;
+      if (CI->getCalledFunction() != KMPStaticInitFunc)
+        continue;
+
+      // Identify last stored value (if any).
+      auto *CallParent = CI->getParent();
+      auto *UpperBoundSlot = CI->getArgOperand(5);
+      for (auto It = I.getIterator(); It != CallParent->end(); ++It) {
+        auto *Store = dyn_cast<StoreInst>(It);
+        if (Store->getPointerOperand() != UpperBoundSlot)
+          continue;
+
+        IF_DEBUG_DEC {
+          errs() << "Found upper bound store:\n";
+          Store->print(errs(), true);
+          abort();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool run() {
+    // Only transform inner-most (non forking) outlined functions to enable vectorization.
+    if (callsFork())
+      return false;
+
+    bool Changed = false;
+    // Create internal 'allocas' for reduction variables to get them into SSA
+    // form.
+    Changed |= privatizeReductionSlots();
+
+    // Create internal 'allocas' for the lower and upper iteration bounds to get
+    // parallel loop exit conditions into SSA form.
+    Changed |= privatizeIterationBounds();
+    return Changed;
+  }
 };
 
 
 OMPDeclutter::OMPDeclutter() : FunctionPass(ID) {}
 
 bool OMPDeclutter::runOnFunction(Function &F) {
-  auto *ReduceFunc = F.getParent()->getFunction(kmpc_reduce_nowait_Name);
-  if (!ReduceFunc)
-    return false;
-
+  std::error_code EC;
+  raw_fd_ostream DumpOut("/tmp/bla.ll", EC);
   auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   OMPDeclutterSession Session(F, LI);
   return Session.run();
