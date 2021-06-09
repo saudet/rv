@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 
+#include "rv/rvDebug.h"
 #include "rv/legacy/passes.h"
 #include "rv/LinkAllPasses.h"
 #include "rv/transform/OMPDeclutter.h"
@@ -37,7 +38,7 @@
 
 #include <set>
 
-#if 1
+#if 0
 #define IF_DEBUG_DEC IF_DEBUG
 #else
 #define IF_DEBUG_DEC if (true)
@@ -247,7 +248,7 @@ struct OMPDeclutterSession {
 
     IF_DEBUG_DEC {
       errs() << "Function after OMP Declutter:\n";
-      F.dump();
+      Dump(F);
     }
     return Changed;
   }
@@ -305,11 +306,31 @@ struct OMPDeclutterSession {
 OMPDeclutter::OMPDeclutter() : FunctionPass(ID) {}
 
 bool OMPDeclutter::runOnFunction(Function &F) {
-  std::error_code EC;
-  raw_fd_ostream DumpOut("/tmp/bla.ll", EC);
+  static bool Dumped = false;
+  if (!Dumped) {
+    if (F.getParent()->getTargetTriple().substr(0,2) == "ve") {
+      Dumped = true;
+      std::error_code EC;
+      raw_fd_ostream DumpOut("/tmp/declutter.ll", EC);
+      F.getParent()->print(DumpOut, nullptr, true, true);
+    }
+  }
+
+  auto *ReduceFunc = F.getParent()->getFunction(kmpc_reduce_nowait_Name);
+  if (!ReduceFunc)
+    return false;
+
+  errs() << "PRE!\n";
+  Dump(F);
+
   auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   OMPDeclutterSession Session(F, LI);
-  return Session.run();
+  bool Res = Session.run();
+
+  errs() << "POST!\n";
+  Dump(F);
+
+  return Res;
 }
 
 /// new pm plumbing.
