@@ -22,6 +22,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -50,7 +51,7 @@ using namespace rv;
 // kmpc function names.:
 const char *kmpc_reduce_nowait_Name = "__kmpc_reduce_nowait";
 const char *kmpc_fork_call_Name = "__kmpc_fork_call";
-const char *kmpc_static_init_4_Name = "__kmpc_static_init_4";
+const char *kmpc_for_static_init_4_Name = "__kmpc_for_static_init_4";
 
 static bool
 subscriptsAlloca(Value *Ptr, AllocaInst *Alloc) {
@@ -69,11 +70,12 @@ using InstSet = std::set<Instruction*>;
 /// Actual implementation.
 struct OMPDeclutterSession {
   Function& F;
+  DominatorTree& DT;
   LoopInfo& LI;
 
   std::set<Instruction*> ReductionSlots;
 
-  OMPDeclutterSession(Function &F, LoopInfo &LI) : F(F), LI(LI) {}
+  OMPDeclutterSession(Function &F, DominatorTree &DT, LoopInfo &LI) : F(F), DT(DT), LI(LI) {}
 
   InstSet collectReductionSlotStores(CallInst &CI) {
     InstSet SlotStores;
@@ -254,9 +256,11 @@ struct OMPDeclutterSession {
   }
 
   bool privatizeIterationBounds() {
-    auto KMPStaticInitFunc = F.getParent()->getFunction(kmpc_static_init_4_Name);
+    auto KMPStaticInitFunc = F.getParent()->getFunction(kmpc_for_static_init_4_Name);
     if (!KMPStaticInitFunc)
       return false;
+
+    std::set<Instruction*> DeadLoads;
 
     // Scan for ' __kmpc_reduce_nowait' call.
     for (auto &I : instructions(F)) {
@@ -269,17 +273,46 @@ struct OMPDeclutterSession {
       // Identify last stored value (if any).
       auto *CallParent = CI->getParent();
       auto *UpperBoundSlot = CI->getArgOperand(5);
+
+      errs() << "Found upper bound slot:" << *UpperBoundSlot << "\n";
+      Value *UpperBoundValue = nullptr;
       for (auto It = I.getIterator(); It != CallParent->end(); ++It) {
         auto *Store = dyn_cast<StoreInst>(It);
+        if (!Store)
+          continue;
         if (Store->getPointerOperand() != UpperBoundSlot)
           continue;
 
+        UpperBoundValue = Store->getValueOperand();
+      }
+      errs() << "Found upper bound value:" << *UpperBoundValue << "\n";
+
+      for (auto &Use : UpperBoundSlot->uses()) {
+        auto Reload = dyn_cast<LoadInst>(Use.getUser());
+        if (!Reload)
+          continue;
+        errs() << "Dominating? " << *Reload << "\n";
+
+        if ((CallParent == Reload->getParent()) ||
+            !DT.dominates(CallParent, Reload->getParent()))
+          continue;
+
+        errs() << "REPLACE RELOAD: " << *Reload << " with " << *UpperBoundValue << "\n";
+        Reload->replaceAllUsesWith(UpperBoundValue);
+        DeadLoads.insert(Reload);
+      }
+
+#if 0
         IF_DEBUG_DEC {
           errs() << "Found upper bound store:\n";
           Store->print(errs(), true);
           abort();
         }
-      }
+#endif
+    }
+
+    for (auto *Load : DeadLoads) {
+      Load->eraseFromParent();
     }
 
     return false;
@@ -316,15 +349,12 @@ bool OMPDeclutter::runOnFunction(Function &F) {
     }
   }
 
-  auto *ReduceFunc = F.getParent()->getFunction(kmpc_reduce_nowait_Name);
-  if (!ReduceFunc)
-    return false;
-
   errs() << "PRE!\n";
   Dump(F);
 
   auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  OMPDeclutterSession Session(F, LI);
+  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  OMPDeclutterSession Session(F, DT, LI);
   bool Res = Session.run();
 
   errs() << "POST!\n";
@@ -340,8 +370,9 @@ OMPDeclutterWrapperPass::OMPDeclutterWrapperPass() {
 
 llvm::PreservedAnalyses rv::OMPDeclutterWrapperPass::run(Function &F, FunctionAnalysisManager &FAM) {
   LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
+  DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
 
-  OMPDeclutterSession Session(F, LI);
+  OMPDeclutterSession Session(F, DT, LI);
   if (Session.run())
     return llvm::PreservedAnalyses::none();
   else
@@ -357,8 +388,8 @@ void OMPDeclutter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetTransformInfoWrapperPass>();
   AU.addRequired<TargetLibraryInfoWrapperPass>();
   AU.addRequired<LoopInfoWrapperPass>();
+  AU.addRequired<DominatorTreeWrapperPass>();
 }
-
 
 FunctionPass *rv::createOMPDeclutterPass() { return new OMPDeclutter(); }
 
