@@ -21,7 +21,7 @@ class PassRegistry;
 
 void initializeAutoMathPassPass(PassRegistry&);
 void initializeIRPolisherWrapperPass(PassRegistry&);
-void initializeLoopVectorizerPass(PassRegistry&);
+void initializeLoopVectorizerLegacyPassPass(PassRegistry&);
 void initializeLowerRVIntrinsicsPass(PassRegistry&);
 void initializeWFVPassPass(PassRegistry&);
 void initializeOMPDeclutterPass(PassRegistry&);
@@ -39,7 +39,7 @@ struct RVForcePassLinking {
 
     rv::createAutoMathPass();
     rv::createIRPolisherWrapperPass();
-    rv::createLoopVectorizerPass();
+    rv::createLoopVectorizerLegacyPass();
     rv::createLowerRVIntrinsicsPass();
     rv::createWFVPass();
     rv::createOMPDeclutterPass();

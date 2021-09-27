@@ -36,30 +36,22 @@ namespace llvm {
 
 namespace rv {
 
-class LoopVectorizer : public llvm::FunctionPass {
+class LoopVectorizer {
 public:
-  static char ID;
-  LoopVectorizer()
-  : llvm::FunctionPass(ID)
-  , config()
-  , F(nullptr)
-  , PassSE(nullptr)
-  , ORE(nullptr)
-  , enableDiagOutput(false)
-  , introduced(false)
-  , vectorizer()
-  {}
+  LoopVectorizer(llvm::Function &F, llvm::TargetTransformInfo &TTI,
+                 llvm::TargetLibraryInfo &TLI,
+                 llvm::OptimizationRemarkEmitter &ORE);
 
-  bool runOnFunction(llvm::Function &F) override;
-
-  /// Register all analyses and transformation required.
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+  bool run();
 
 private:
-  Config config;
-  llvm::Function * F;
-  llvm::ScalarEvolution * PassSE;
-  llvm::OptimizationRemarkEmitter *ORE;
+  Config RVConfig;
+  llvm::Function &F;
+
+  // Pass objects from PM this pass is inserted in.
+  llvm::TargetTransformInfo &PassTTI;
+  llvm::TargetLibraryInfo &PassTLI;
+  llvm::OptimizationRemarkEmitter &PassORE;
 
   bool enableDiagOutput;
   bool introduced;
@@ -137,18 +129,24 @@ private:
   //              llvm::Loop &TheLoop) const;
 };
 
-struct LoopVectorizerWrapperPass : llvm::PassInfoMixin<LoopVectorizerWrapperPass> {
-  private:
-    std::shared_ptr<llvm::FunctionPass> loopvec;
-  public:
-    LoopVectorizerWrapperPass() : loopvec(rv::createLoopVectorizerPass()) {};
+class LoopVectorizerLegacyPass : public llvm::FunctionPass {
+public:
+  static char ID;
+  LoopVectorizerLegacyPass() : llvm::FunctionPass(ID) {}
 
-    llvm::PreservedAnalyses run (llvm::Function &F, llvm::FunctionAnalysisManager &FAM) {
-      if (loopvec->runOnFunction(F))
-        return llvm::PreservedAnalyses::none();
-      else
-        return llvm::PreservedAnalyses::all();
-    }
+  bool runOnFunction(llvm::Function &F) override;
+
+  /// Register all analyses and transformation required.
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
+
+struct LoopVectorizerWrapperPass
+    : llvm::PassInfoMixin<LoopVectorizerWrapperPass> {
+public:
+  LoopVectorizerWrapperPass(){};
+
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &FAM);
 };
 
 } // namespace rv

@@ -46,7 +46,7 @@ void addCleanupPasses(legacy::PassManagerBase &PM) {
 }
 
 void addOuterLoopVectorizer(legacy::PassManagerBase &PM) {
-  PM.add(rv::createLoopVectorizerPass());
+  PM.add(rv::createLoopVectorizerLegacyPass());
 }
 
 void addAutoMathPass(llvm::legacy::PassManagerBase &PM) {

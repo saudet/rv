@@ -32,7 +32,7 @@ IF (RV_REBUILD_GENBC)
   set_source_files_properties(${RV_SLEEF_OBJECTS} PROPERTIES GENERATED On)
 endif()
 
-add_rv_library(RV
+set (RV_LIBRARY_OBJECTS
   ./Mask.cpp
   ./MaskBuilder.cpp
   ./PlatformInfo.cpp
@@ -106,56 +106,62 @@ add_rv_library(RV
   ${RV_SLEEF_OBJECTS}
 )
 
+IF (RV_COMPONENT_BUILD)
+  add_llvm_component_library(${RV_LIBRARY_NAME} ${RV_LIBRARY_OBJECTS})
+ELSE()
+  add_rv_library(${RV_LIBRARY_NAME} ${RV_LIBRARY_OBJECTS})
+ENDIF()
+
 # Make sure BC buffer cpp files are available before linking libRV
 IF (RV_REBUILD_GENBC)
-  add_dependencies(RV sleef_genbc)
+  add_dependencies(${RV_LIBRARY_NAME} sleef_genbc)
 endif()
 
-if (BUILD_SHARED_LIBS)
-  target_link_libraries(RV PUBLIC
-    LLVMSupport
-    LLVMCore
-    LLVMScalarOpts
-    LLVMAggressiveInstCombine
-    LLVMTransformUtils
-    LLVMAnalysis
-    LLVMipo
-    LLVMMC
-    LLVMIRReader
-    LLVMPasses
-# The libraries below are required for darwin: http://PR26392
-    LLVMBitReader
-    LLVMMCParser
-    LLVMObject
-    LLVMProfileData
-    LLVMTarget
-    LLVMVectorize
-  )
-  link_directories(
-    ${LLVM_LIBRARY_DIR}
-  )
-elseif (LLVM_LINK_LLVM_DYLIB)
-  target_link_libraries(RV PUBLIC LLVM)
-  link_directories(
-    ${LLVM_LIBRARY_DIR}
-  )
-endif()
+# if (BUILD_SHARED_LIBS)
+#   target_link_libraries(RV PUBLIC
+#     LLVMSupport
+#     LLVMCore
+#     LLVMScalarOpts
+#     LLVMAggressiveInstCombine
+#     LLVMTransformUtils
+#     LLVMAnalysis
+#     LLVMipo
+#     LLVMMC
+#     LLVMIRReader
+#     LLVMPasses
+# # The libraries below are required for darwin: http://PR26392
+#     LLVMBitReader
+#     LLVMMCParser
+#     LLVMObject
+#     LLVMProfileData
+#     LLVMTarget
+#     LLVMVectorize
+#   )
+#   link_directories(
+#     ${LLVM_LIBRARY_DIR}
+#   )
+# elseif (LLVM_LINK_LLVM_DYLIB)
+#   target_link_libraries(RV PUBLIC LLVM)
+#   link_directories(
+#     ${LLVM_LIBRARY_DIR}
+#   )
+# endif()
 
-# Build a monolithic libRV.a and a thin module LLVMRV.moduleext that links to
-# that static library.
-if (MSVC)
-  # Add dummy target, because loadable modules are not supported on Windows
-  add_custom_target(LLVMRV)
-  set_target_properties(LLVMRV PROPERTIES FOLDER "rv")
-else ()
-  add_rv_loadable_module(LLVMRV
-    rv.cpp
-  )
-
-target_link_libraries(LLVMRV PRIVATE RV)
-
-set_target_properties(LLVMRV
-    PROPERTIES
-    LINKER_LANGUAGE CXX
-    PREFIX "")
-endif ()
+# # Build a monolithic libRV.a and a thin module LLVMRV.moduleext that links to
+# # that static library.
+# if (MSVC)
+#   # Add dummy target, because loadable modules are not supported on Windows
+#   add_custom_target(LLVMRV)
+#   set_target_properties(LLVMRV PROPERTIES FOLDER "rv")
+# else ()
+#   add_rv_loadable_module(LLVMRV
+#     rv.cpp
+#   )
+# 
+# target_link_libraries(LLVMRV PRIVATE RV)
+# 
+# set_target_properties(LLVMRV
+#     PROPERTIES
+#     LINKER_LANGUAGE CXX
+#     PREFIX "")
+# endif ()

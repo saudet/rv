@@ -21,7 +21,7 @@ void addRVPasses(llvm::legacy::PassManagerBase &PM);
 // fine-grained pass adding
 // RV-based loop vectorizer pass
 llvm::ModulePass *createAutoMathPass();
-llvm::FunctionPass *createLoopVectorizerPass();
+llvm::FunctionPass *createLoopVectorizerLegacyPass();
 llvm::ModulePass *createAutoMathPass();
 llvm::ModulePass *createWFVPass();
 llvm::FunctionPass *createIRPolisherWrapperPass(Config config = Config());

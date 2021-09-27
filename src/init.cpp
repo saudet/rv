@@ -22,7 +22,7 @@ class StaticInitializer {
 public:
   StaticInitializer() {
     llvm::PassRegistry &Registry = *llvm::PassRegistry::getPassRegistry();
-    llvm::initializeLoopVectorizerPass(Registry);
+    llvm::initializeLoopVectorizerLegacyPassPass(Registry);
     llvm::initializeIRPolisherWrapperPass(Registry);
     llvm::initializeAutoMathPassPass(Registry);
     llvm::initializeWFVPassPass(Registry);

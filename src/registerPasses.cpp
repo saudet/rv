@@ -125,6 +125,7 @@ void addFunctionPasses(ModulePassManager &MPM,
 static bool
 buildDefaultRVPipeline(StringRef, ModulePassManager &MPM,
                        ArrayRef<PassBuilder::PipelineElement> Elems) {
+
   // normalize loops
   rv::addPreparatoryPasses(MPM);
 
@@ -132,7 +133,9 @@ buildDefaultRVPipeline(StringRef, ModulePassManager &MPM,
   rv::addWholeFunctionVectorizer(MPM);
 
   // vectorize annotated loops
-  addFunctionPasses(MPM, [](auto &FPM) { rv::addOuterLoopVectorizer(FPM); });
+  addFunctionPasses(MPM, [](auto &FPM) {
+      rv::addOuterLoopVectorizer(FPM);
+  });
 
   // DCE, instcombine, ..
   rv::addCleanupPasses(MPM);
@@ -141,6 +144,12 @@ buildDefaultRVPipeline(StringRef, ModulePassManager &MPM,
 }
 
 namespace rv {
+
+void
+addConfiguredPasses(ModulePassManager &MPM) {
+  buildDefaultRVPipeline("", MPM, {});
+}
+
 void addConfiguredPasses(PassBuilder &PB) {
   PB.registerPipelineParsingCallback(buildDefaultRVPipeline);
 }

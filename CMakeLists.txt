@@ -1,4 +1,7 @@
-# Check if this is a in tree build.
+set(RV_LIBRARY_NAME RV)
+set(RV_COMPONENT_BUILD Off)
+
+# Check if this is an external build.
 if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   project(RV)
   cmake_minimum_required(VERSION 3.4.3)
@@ -85,7 +88,16 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
 
   # Make sure the isl c files are built as fPIC
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+  message("rv: Building RV as an external LLVM tool")
 else ()
+  # Check if this is an LLVM component build.
+  if (NOT DEFINED LLVM_TOOL_RV_BUILD)
+    set(RV_COMPONENT_BUILD On)
+    set(RV_LIBRARY_NAME LLVMRV)
+    message("-- rv: Building RV as LLVM component (requires LLVM patches!)")
+  else()
+    message("-- rv: Building RV as an LLVM tool")
+  endif()
   set(LLVM_SOURCE_ROOT "${LLVM_MAIN_SRC_DIR}")
 endif ()
 
@@ -186,7 +198,7 @@ add_subdirectory(src)
 # rvTool, ..
 add_subdirectory(tools)
 
-add_subdirectory(plugin)
+# add_subdirectory(plugin)
 
 # Add target to check formatting of RV files
 file( GLOB_RECURSE files *.h src/*.cpp src/*.c tools/*.cpp tools/*.c tools/*.h)
