@@ -106,67 +106,46 @@ set (RV_LIBRARY_OBJECTS
   ${RV_SLEEF_OBJECTS}
 )
 
-# Whether to register with LLVM's plugin mechanism.
-IF (RV_ENABLE_PLUGIN)
-  set(RV_LIBRARY_OBJECTS ${RV_LIBRARY_OBJECTS} plugin/plugin.cpp)
-ENDIF()
-
 IF (RV_COMPONENT_BUILD)
-  # RV is checked-out into a (patched) llvm at llvm/lib.
-  add_llvm_component_library(LLVMRV
-    ${RV_LIBRARY_OBJECTS}
-  )
-ELSEIF (RV_ENABLE_PLUGIN)
-  # RV is build as an LLVM tool - register as an LLVM plugin.
-  add_llvm_pass_plugin(RV
-    ${RV_LIBRARY_OBJECTS}
-    DEPENDS
-    RV
-    intrinsics_gen
-    BUILDTREE_ONLY
- )
+  add_llvm_component_library(${RV_LIBRARY_NAME} ${RV_LIBRARY_OBJECTS})
 ELSE()
-  # RV is build as an LLVM tool - do not register as a pass plugin.
   add_rv_library(${RV_LIBRARY_NAME} ${RV_LIBRARY_OBJECTS})
 ENDIF()
 
-# Make sure BC buffer cpp files are available before linking into the RV library.
+# Make sure BC buffer cpp files are available before linking libRV
 IF (RV_REBUILD_GENBC)
   add_dependencies(${RV_LIBRARY_NAME} sleef_genbc)
 endif()
 
-# Link against LLVM libraries.
-if (NOT RV_COMPONENT_BUILD)
- if (BUILD_SHARED_LIBS)
-   target_link_libraries(RV PUBLIC
-     LLVMSupport
-     LLVMCore
-     LLVMScalarOpts
-     LLVMAggressiveInstCombine
-     LLVMTransformUtils
-     LLVMAnalysis
-     LLVMipo
-     LLVMMC
-     LLVMIRReader
-     LLVMPasses
- # The libraries below are required for darwin: http://PR26392
-     LLVMBitReader
-     LLVMMCParser
-     LLVMObject
-     LLVMProfileData
-     LLVMTarget
-     LLVMVectorize
-   )
-   link_directories(
-     ${LLVM_LIBRARY_DIR}
-   )
- elseif (LLVM_LINK_LLVM_DYLIB)
-   target_link_libraries(RV PUBLIC LLVM)
-   link_directories(
-     ${LLVM_LIBRARY_DIR}
-   )
- endif()
-endif()
+# if (BUILD_SHARED_LIBS)
+#   target_link_libraries(RV PUBLIC
+#     LLVMSupport
+#     LLVMCore
+#     LLVMScalarOpts
+#     LLVMAggressiveInstCombine
+#     LLVMTransformUtils
+#     LLVMAnalysis
+#     LLVMipo
+#     LLVMMC
+#     LLVMIRReader
+#     LLVMPasses
+# # The libraries below are required for darwin: http://PR26392
+#     LLVMBitReader
+#     LLVMMCParser
+#     LLVMObject
+#     LLVMProfileData
+#     LLVMTarget
+#     LLVMVectorize
+#   )
+#   link_directories(
+#     ${LLVM_LIBRARY_DIR}
+#   )
+# elseif (LLVM_LINK_LLVM_DYLIB)
+#   target_link_libraries(RV PUBLIC LLVM)
+#   link_directories(
+#     ${LLVM_LIBRARY_DIR}
+#   )
+# endif()
 
 # # Build a monolithic libRV.a and a thin module LLVMRV.moduleext that links to
 # # that static library.
