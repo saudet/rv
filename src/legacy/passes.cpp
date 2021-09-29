@@ -54,7 +54,7 @@ void addAutoMathPass(llvm::legacy::PassManagerBase &PM) {
 }
 
 void addWholeFunctionVectorizer(llvm::legacy::PassManagerBase &PM) {
-  PM.add(rv::createWFVPass());
+  PM.add(rv::createWFVLegacyPass());
 }
 
 void addLowerBuiltinsPass(legacy::PassManagerBase &PM) {

@@ -23,7 +23,7 @@ void initializeAutoMathPassPass(PassRegistry&);
 void initializeIRPolisherWrapperPass(PassRegistry&);
 void initializeLoopVectorizerLegacyPassPass(PassRegistry&);
 void initializeLowerRVIntrinsicsPass(PassRegistry&);
-void initializeWFVPassPass(PassRegistry&);
+void initializeWFVLegacyPassPass(PassRegistry&);
 void initializeOMPDeclutterPass(PassRegistry&);
 } // namespace llvm
 
@@ -41,7 +41,7 @@ struct RVForcePassLinking {
     rv::createIRPolisherWrapperPass();
     rv::createLoopVectorizerLegacyPass();
     rv::createLowerRVIntrinsicsPass();
-    rv::createWFVPass();
+    rv::createWFVLegacyPass();
     rv::createOMPDeclutterPass();
   }
 } RVForcePassLinking; // Force link by creating a global definition.

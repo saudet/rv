@@ -23,7 +23,7 @@ void addRVPasses(llvm::legacy::PassManagerBase &PM);
 llvm::ModulePass *createAutoMathPass();
 llvm::FunctionPass *createLoopVectorizerLegacyPass();
 llvm::ModulePass *createAutoMathPass();
-llvm::ModulePass *createWFVPass();
+llvm::ModulePass *createWFVLegacyPass();
 llvm::FunctionPass *createIRPolisherWrapperPass(Config config = Config());
 
 // Clean up IR using domain knowledge of kmpc calls.

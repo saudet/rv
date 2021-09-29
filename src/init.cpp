@@ -25,7 +25,7 @@ public:
     llvm::initializeLoopVectorizerLegacyPassPass(Registry);
     llvm::initializeIRPolisherWrapperPass(Registry);
     llvm::initializeAutoMathPassPass(Registry);
-    llvm::initializeWFVPassPass(Registry);
+    llvm::initializeWFVLegacyPassPass(Registry);
   }
 };
 static StaticInitializer InitializeEverything;
