@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 //
 
-#include "rv/transform/WFVPass.h"
-#include "rv/LinkAllPasses.h"
+#include "rv/passes/WFVPass.h"
+#include "rv/legacy/LinkAllPasses.h"
 
 #include "rv/rv.h"
 #include "rv/vectorMapping.h"

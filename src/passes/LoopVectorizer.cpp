@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rv/transform/LoopVectorizer.h"
-#include "rv/LinkAllPasses.h"
+#include "rv/passes/LoopVectorizer.h"
+#include "rv/legacy/LinkAllPasses.h"
 
 #include "rv/analysis/costModel.h"
 #include "rv/analysis/loopAnnotations.h"

@@ -38,8 +38,9 @@ set (RV_LIBRARY_OBJECTS
   ./PlatformInfo.cpp
   ./annotations.cpp
   ./config.cpp
-  ./init.cpp
   ./intrinsics.cpp
+  ./legacy/init.cpp
+  ./legacy/passes.cpp
   ./passes.cpp
   ./registerPasses.cpp
   ./report.cpp
@@ -59,11 +60,17 @@ set (RV_LIBRARY_OBJECTS
   analysis/predicateAnalysis.cpp
   analysis/reductionAnalysis.cpp
   analysis/reductions.cpp
-  ./legacy/passes.cpp
   native/MemoryAccessGrouper.cpp
   native/NatBuilder.cpp
   native/ShuffleBuilder.cpp
   native/Utils.cpp
+  passes/AutoMathPass.cpp
+  passes/LoopVectorizer.cpp
+  passes/OMPDeclutter.cpp
+  passes/WFVPass.cpp
+  passes/irPolisher.cpp
+  passes/loopExitCanonicalizer.cpp
+  passes/lowerRVIntrinsics.cpp
   region/FunctionRegion.cpp
   region/LoopRegion.cpp
   region/Region.cpp
@@ -73,22 +80,13 @@ set (RV_LIBRARY_OBJECTS
   resolver/sleefResolver.cpp
   shape/vectorShape.cpp
   shape/vectorShapeTransformer.cpp
-  transform/AutoMathPass.cpp
   transform/CoherentIFTransform.cpp
   transform/Linearizer.cpp
-  transform/LoopVectorizer.cpp
-  transform/OMPDeclutter.cpp
-  transform/WFVPass.cpp
   transform/bosccTransform.cpp
   transform/crtLowering.cpp
-  transform/crtLowering.cpp
-  # transform/divLoopTrans.cpp
   transform/guardedDivLoopTrans.cpp
-  transform/irPolisher.cpp
   transform/loopCloner.cpp
-  transform/loopExitCanonicalizer.cpp
   transform/lowerDivergentSwitches.cpp
-  transform/lowerRVIntrinsics.cpp
   transform/maskExpander.cpp
   transform/memCopyElision.cpp
   transform/redOpt.cpp
@@ -117,35 +115,37 @@ IF (RV_REBUILD_GENBC)
   add_dependencies(${RV_LIBRARY_NAME} sleef_genbc)
 endif()
 
-# if (BUILD_SHARED_LIBS)
-#   target_link_libraries(RV PUBLIC
-#     LLVMSupport
-#     LLVMCore
-#     LLVMScalarOpts
-#     LLVMAggressiveInstCombine
-#     LLVMTransformUtils
-#     LLVMAnalysis
-#     LLVMipo
-#     LLVMMC
-#     LLVMIRReader
-#     LLVMPasses
-# # The libraries below are required for darwin: http://PR26392
-#     LLVMBitReader
-#     LLVMMCParser
-#     LLVMObject
-#     LLVMProfileData
-#     LLVMTarget
-#     LLVMVectorize
-#   )
-#   link_directories(
-#     ${LLVM_LIBRARY_DIR}
-#   )
-# elseif (LLVM_LINK_LLVM_DYLIB)
-#   target_link_libraries(RV PUBLIC LLVM)
-#   link_directories(
-#     ${LLVM_LIBRARY_DIR}
-#   )
-# endif()
+if (NOT RV_COMPONENT_BUILD)
+  if (BUILD_SHARED_LIBS)
+    target_link_libraries(RV PUBLIC
+      LLVMSupport
+      LLVMCore
+      LLVMScalarOpts
+      LLVMAggressiveInstCombine
+      LLVMTransformUtils
+      LLVMAnalysis
+      LLVMipo
+      LLVMMC
+      LLVMIRReader
+      LLVMPasses
+  # The libraries below are required for darwin: http://PR26392
+      LLVMBitReader
+      LLVMMCParser
+      LLVMObject
+      LLVMProfileData
+      LLVMTarget
+      LLVMVectorize
+    )
+    link_directories(
+      ${LLVM_LIBRARY_DIR}
+    )
+  elseif (LLVM_LINK_LLVM_DYLIB)
+    target_link_libraries(RV PUBLIC LLVM)
+    link_directories(
+      ${LLVM_LIBRARY_DIR}
+    )
+  endif()
+endif()
 
 # # Build a monolithic libRV.a and a thin module LLVMRV.moduleext that links to
 # # that static library.

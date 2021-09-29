@@ -106,6 +106,7 @@ OPTION(RV_REBUILD_GENBC "Build the builtin BC library (SLEEF, SIMD random, ..) f
 OPTION(RV_ENABLE_SLEEF "Generate RV's builtin vector-math library" ON)
 OPTION(RV_ENABLE_CRT "Implement complex math functions using BC-compiler compiler-rt" OFF)
 OPTION(RV_DEBUG "Enable verbose debug output and expensive internal checks." OFF)
+OPTION(RV_ENABLE_PLUGIN "Build the RVPLUG pass plugin." OFF)
 
 if (RV_REBUILD_GENBC AND LLVM_RVPLUG_LINK_INTO_TOOLS)
   message(FATAL_ERROR "Cannot set RV_REBUILD_GENBC and LLVM_RVPLUG_LINK_INTO_TOOLS at the same time. If you want to update the vecmath bitcode files and buffers, (temporarily) disable LLVM_RVPLUG_LINK_INTO_TOOLS, compile LLVM and copy the BUILD/tools/rv/lib/*.gen.cpp files to rv/vecmath/prebuilt_genbc/.")
@@ -198,7 +199,9 @@ add_subdirectory(src)
 # rvTool, ..
 add_subdirectory(tools)
 
-# add_subdirectory(plugin)
+if (RV_ENABLE_PLUGIN)
+  add_subdirectory(plugin)
+endif()
 
 # Add target to check formatting of RV files
 file( GLOB_RECURSE files *.h src/*.cpp src/*.c tools/*.cpp tools/*.c tools/*.h)

@@ -1,4 +1,4 @@
-//===- rv/transform/loopVectorizer.h - loop vectorizer pass  --*- C++ -*-===//
+//===- rv/passes/loopVectorizer.h - loop vectorizer pass  --*- C++ -*-===//
 //
 // Part of the RV Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -141,10 +141,11 @@ public:
 };
 
 struct LoopVectorizerWrapperPass
-    : llvm::PassInfoMixin<LoopVectorizerWrapperPass> {
+    : public llvm::PassInfoMixin<LoopVectorizerWrapperPass> {
 public:
   LoopVectorizerWrapperPass(){};
 
+  static llvm::StringRef name() { return "rv::LoopVectorizer"; }
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &FAM);
 };

@@ -19,10 +19,7 @@
 
 namespace rv {
 // add passes to \p PB according to rv flags (cl::opts).
-void addConfiguredPasses(llvm::ModulePassManager &MPM);
-
-// add passes to \p PB according to rv flags (cl::opts).
-void addConfiguredPasses(llvm::PassBuilder &PB);
+void addConfiguredRVPasses(llvm::PassBuilder &PB);
 }
 
 #endif // RV_REGISTERPASSES_H
