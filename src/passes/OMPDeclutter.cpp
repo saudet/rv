@@ -28,7 +28,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
-#include "llvm/Analysis/LoopDependenceAnalysis.h"
+#include "llvm/NOELLE/LDA/LoopDependenceAnalysis.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/Instructions.h"
