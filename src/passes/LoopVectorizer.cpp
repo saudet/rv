@@ -293,8 +293,23 @@ bool LoopVectorizer::scoreLoop(LoopJob &LJ, LoopScore &LS, Loop &L) {
     return false;
   }
 
+  Report() << "Inside function " << F.getName() << " and loop " << L.getName() << "\n";
+
+  bool Force = false;
+  StringRef::size_type Delim;
+  StringRef Functions(getenv("RV_FORCE_FUNCTIONS"));
+  StringRef Loops(getenv("RV_FORCE_LOOPS"));
+  while ((Delim = Functions.find(",")) != StringRef::npos) {
+    Force |= Functions.substr(0, Delim) == F.getName();
+    Functions = Functions.substr(Delim + 1);
+  }
+  while ((Delim = Loops.find(",")) != StringRef::npos) {
+    Force |= Loops.substr(0, Delim) == L.getName();
+    Loops = Loops.substr(Delim + 1);
+  }
+
   // Trivial case.
-  if (L.isAnnotatedParallel()) {
+  if (L.isAnnotatedParallel() || Force) {
     mdAnnot.minDepDist = ParallelDistance;
     mdAnnot.vectorizeEnable = true;
 
